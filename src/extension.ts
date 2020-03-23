@@ -6,7 +6,10 @@ import * as semver from 'semver'
 import * as url from 'url'
 import * as vscode from 'vscode'
 import { LanguageClient, LanguageClientOptions, RevealOutputChannelOn, StreamInfo } from 'vscode-languageclient'
+import { SIGINT } from 'constants'
 const composerJson = require('../composer.json')
+
+let phpChildProcess : ChildProcess | null = null;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     const conf = vscode.workspace.getConfiguration('php')
@@ -104,6 +107,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                         client.outputChannel.show()
                     }
                 })
+
+                phpChildProcess = childProcess;
+
                 return childProcess
             })
         })
@@ -134,4 +140,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // Push the disposable to the context's subscriptions so that the
     // client can be deactivated on extension deactivation
     context.subscriptions.push(disposable)
+}
+
+export function deactivate(): Thenable<void> {
+    // Make sure to shutdown anybody who needs it.
+    if (phpChildProcess != null) {
+        phpChildProcess.kill();
+    }
+    return Promise.resolve();
 }
